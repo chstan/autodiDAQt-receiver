@@ -2,6 +2,7 @@
 """Analyis-side bridge for autodiDAQt."""
 
 import sys
+from pathlib import Path
 
 from .receiver import *
 
@@ -17,6 +18,7 @@ def get_version() -> str:
     except importlib_metadata.PackageNotFoundError:  # pragma: no cover
         return "unknown"
 
+RECEIVER_ROOT = Path(__file__).parent
 
 version: str = get_version()
 VERSION: str = version
