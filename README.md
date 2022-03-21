@@ -8,7 +8,7 @@
 [![Code style: black](https://img.shields.io/badge/code%20style-black-000000.svg)](https://github.com/psf/black)
 [![License](https://img.shields.io/github/license/chstan/autodidaqt-receiver)](https://github.com/chstan/autodidaqt-receiver/blob/master/LICENSE)
 
-Analyis-side bridge for autodiDAQt.
+Analysis-side bridge for AutodiDAQt.
 
 </div>
 
@@ -23,6 +23,13 @@ or install with `Poetry`
 ```bash
 poetry add autodidaqt-receiver
 ```
+
+## Installation from Source
+
+1. Clone this repository
+2. Install `make` if you are on a Windows system
+3. Install `poetry` (the alternative Python package manager)
+4. Run `make install` from the directory containing this README
 
 ## Building and releasing
 
