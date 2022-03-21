@@ -1,27 +1,14 @@
-from typing import Tuple
-
 import argparse
 import time
-from multiprocessing import Process
 
 import xarray as xr
 from autodidaqt.core import CommandLineConfig
 from autodidaqt_common.remote.config import RemoteConfiguration
 
 from autodidaqt_receiver import Receiver
-from integration_tests.common import run_from_daq_suite
+from integration_tests.common import run_from_daq_suite, Builder
 
 ADDRESS = "tcp://127.0.0.1:13133"
-
-
-def build(config: CommandLineConfig) -> Tuple[Process, Receiver]:
-    receiver = Receiver(remote_config, None)
-    print(f"Start the appropriate autodiDAQt instance at {config.remote_config.ui_address}")
-
-    process = run_from_daq_suite("slow_scalar", config, redirect_output=False)
-    receiver.connect(request_driving_rights=True)
-    return process, receiver
-
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
@@ -32,7 +19,7 @@ if __name__ == "__main__":
 
     remote_config = RemoteConfiguration(ADDRESS)
     config = CommandLineConfig(headless=not args.ui, remote_config=remote_config)
-    process, receiver = build(config)
+    process, receiver = Builder("slow_scalar").build(config, remote_config)
     receiver.cli()
 
     process.kill()
@@ -46,7 +33,7 @@ def test_async_scanning():
     receiver = Receiver(remote_config, None)
     print(f"Start the appropriate autodiDAQt instance at {ADDRESS}")
 
-    process = run_from_daq_suite("slow_scalar", config, redirect_output=False)
+    process = run_from_daq_suite("manuscript_fig3", config, redirect_output=False)
     receiver.connect(request_driving_rights=True)
 
     receiver.scan("dx Scan Fast", n_x=9)
