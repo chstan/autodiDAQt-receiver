@@ -12,6 +12,8 @@ readme = "README.md"
 repository = "https://github.com/chstan/autodidaqt-receiver"
 version = "0.1.0"
 
+include = ["autodidaqt_receiver/fixtures/**"]
+
 keywords = ["data acquisition", "physics", "instrumentation", "DAQ"]
 
 classifiers = [
