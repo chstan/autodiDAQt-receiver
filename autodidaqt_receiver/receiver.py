@@ -19,7 +19,11 @@ from autodidaqt_common.remote.command import (
     Log,
     ReadAxisCommand,
     RecordData,
+    PointCommand,
+    StepCommand,
     RunSummary,
+    StopRunCommand,
+    StartManualRunCommand,
     SetScanConfigCommand,
     StartRunCommand,
     WriteAxisCommand,
@@ -206,6 +210,7 @@ class Connection:
 @dataclass
 class Run:
     """Represents the currently running acquisition."""
+    is_manually_controlled: bool = False
 
     scan_configuration: Optional[Any] = None
     collation: Optional[Collation] = None
@@ -346,18 +351,39 @@ class Receiver:
         self._initial_state = state.state
         self.initialize_from_initial_experiment_state(state.state)
 
-    def write(self, axis_path, value):
+    def normalize_write(self, axis_path, value):
         axis_path = AxisPath.to_tuple(axis_path)
         axis: AxisRepresentation = self.axes[axis_path]
         type_def = TypeDefinition.get_definition_by_id(axis.state.schema)
 
         value = type_def.to_value(value)
+        return axis_path, value
+
+    def write(self, axis_path, value):
+        axis_path, value = self.normalize_write(axis_path, value)
         self.connection.socket.send(WriteAxisCommand(axis_path, value))
 
     def read(self, axis_path):
         axis_path = AxisPath.to_tuple(axis_path)
         self.connection.socket.send(ReadAxisCommand(axis_path))
 
+    def point(self):
+        self.connection.socket.send(PointCommand())
+    
+    def step(self, writes=None, reads=None):
+        self.catchup_on_messages()
+        if writes is None:
+            writes = []
+
+        if reads is None:
+            reads = []
+
+        writes = [self.normalize_write(p, v) for p, v in writes]
+        reads = [AxisPath.to_tuple(p) for p in reads]
+        self.connection.socket.send(
+            StepCommand(reads=reads, writes=writes)
+        )
+    
     @property
     def data(self):
         self.catchup_on_messages()
@@ -440,6 +466,17 @@ class Receiver:
         assert self.run is not None
         self.history.append(self.run)
         self.run = None
+
+    def manual_scan(self):
+        self.connection.socket.send(StartManualRunCommand())
+        self.run = Run(is_manually_controlled=True)
+        print(f"Starting manual scan.")
+        print(f"You can access your data with `Receiver.run.data`.")
+        print(f"Finish the scan by calling `.finish_scan`")
+
+    def finish_scan(self):
+        assert self.run is not None and self.run.is_manually_controlled
+        self.connection.socket.send(StopRunCommand())
 
     def scan(self, scan_name, *args, **kwargs):
         config = self.build_scan_config(scan_name, *args, **kwargs)
